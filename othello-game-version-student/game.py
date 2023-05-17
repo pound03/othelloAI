@@ -17,7 +17,11 @@ import sys
 
 def main():
     # Initializes the game
-    args = sys.argv[1:]
+    if len(sys.argv) < 2:
+        args = ['com']
+        args = ['user']
+    else:
+        args = sys.argv[1:]
     print(args)
     game = othello.Othello(args[0])
     game.draw_board()

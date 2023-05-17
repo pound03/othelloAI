@@ -214,6 +214,7 @@ class Othello(Board):
         
         self.current_player = 0
         self.opponent = 1
+        self.computeothello = ComputeOthello(self.board,self.num_tiles,8)
         if self.playmode == 'com':
             self.computeothello = ComputeOthello(self.board,self.num_tiles,8)
             self.play_computer()
@@ -230,7 +231,7 @@ class Othello(Board):
             Does: Plays alternately between the computers.  
         '''
         # ถ้าเล่นกับคอมพิวเตอร์ ต้องกำหนดว่า com แต่ละตัวเล่นยังไง
-        if self.current_player ==0:
+        if self.current_player == 0:
             start = time()
             # findBestMove method ต้องคืนค่า (row,col) ออกมาว่าจะลงที่ตำแหน่งใด
             self.move = self.computeothello.findBestMove(copy.deepcopy(self.board),self.current_player,self.opponent,
@@ -240,9 +241,9 @@ class Othello(Board):
                 self.make_move()
         else:
             start = time()
-            self.make_random_move()
-            # self.move = self.computeothello.findBestMove(copy.deepcopy(self.board),self.current_player,self.opponent,
-            #                           copy.deepcopy(self.num_tiles))
+            # self.make_random_move()
+            self.move = self.computeothello.findBestMove(copy.deepcopy(self.board),self.current_player,self.opponent,
+                                      copy.deepcopy(self.num_tiles))
             end = time()
             if self.move:
                 self.make_move()
@@ -315,7 +316,10 @@ class Othello(Board):
                 print('Computer\'s turn.')
                 # for debugging 
                 print(self.__str__())
-                self.make_random_move()
+                # self.make_random_move()
+                self.move = self.computeothello.findBestMove(copy.deepcopy(self.board),self.current_player,self.opponent,
+                                            copy.deepcopy(self.num_tiles))
+                
                 if self.move:
                     self.make_move()
                 self.current_player = 0

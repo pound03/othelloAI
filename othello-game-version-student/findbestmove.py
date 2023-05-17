@@ -135,7 +135,7 @@ class ComputeOthello:
             game.make_move()
 
             # Calculate the score of the move using the Minimax algorithm with alpha-beta pruning
-            score = self.minimax(1, alpha, beta)
+            score = game.minimax(30, alpha, beta)
 
             # Update the best move and score if necessary
             if score > best_score:
@@ -157,6 +157,7 @@ class ComputeOthello:
             return self.evaluate_board()
 
         if self.current_player == 0:
+            memory_move = None
             max_eval = float('-inf')
             for move in legal_moves:
                 self.move = move
@@ -164,14 +165,20 @@ class ComputeOthello:
                 self.current_player, self.opponent = self.opponent, self.current_player
                 eval = self.minimax(depth - 1, alpha, beta)
                 self.current_player, self.opponent = self.opponent, self.current_player
-                # self.undo_move()
+                #do undo move with last move
+                self.undo_move()
+                
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
-                if beta <= alpha:
+                
+                if beta <= alpha*1.2 or memory_move == None:
+                    memory_move = move
                     break
+            self.move = memory_move
             return max_eval
         else:
             min_eval = float('inf')
+            memory_move = None
             for move in legal_moves:
                 self.move = move
                 self.make_move()
@@ -181,21 +188,45 @@ class ComputeOthello:
                 self.undo_move()
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
-                if beta <= alpha:
-                    break
+                if beta <= alpha*1.2 or memory_move == None:
+                    memory_move = move
+            self.move = memory_move
             return min_eval
 
     def evaluate_board(self):
         # Define a list of weight values for each position on the board
-        weights = [[120, -20,  20,   5,   5,  20, -20, 120],
-                   [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
-                   [20,  -5,  15,   3,   3,  15,  -5,  20],
-                   [5,  -5,   3,   3,   3,   3,  -5,   5],
-                   [5,  -5,   3,   3,   3,   3,  -5,   5],
-                   [20,  -5,  15,   3,   3,  15,  -5,  20],
-                   [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
-                   [120, -20,  20,   5,   5,  20, -20, 120]]
+        #if end game use this weight
+        if self.num_tiles[0] + self.num_tiles[1] >= 55:
+            return self.evaluate_board_endgame()
+        
+        #if else and less than 60 use this weight
+        elif self.num_tiles[0] + self.num_tiles[1] <= 15:
+            return self.evaluate_board_opening()
 
+        #mid game use this weight
+        elif self.num_tiles[0] + self.num_tiles[1] > 15 and self.num_tiles[0] + self.num_tiles[1] < 60:
+            return self.evaluate_board_midgame()
+        
+
+    def evaluate_board_opening(self):
+        weights = [[200, -60,  20,   10,   10,  20, -60, 200],
+                   [-60, -80,  -5,  -5,  -5,  -5, -80, -60],
+                   [20,  -5,  40,   5,   5,  40,  -5,  20],
+                   [10,  -5,   5,   3,   3,   5,  -5,   10],
+                   [10,  -5,   5,   3,   3,   5,  -5,   10],
+                   [20,  -5,  40,   5,   5,  40,  -5,  20],
+                   [-60, -80,  -5,  -5,  -5,  -5, -80, -60],
+                   [200, -60,  20,   10,   10,  20, -60, 200]]
+        weights = [
+                    [10000, -2000, 10, 5, 5, 10, -2000, 10000],
+                    [-2000, -3000, -2, -2, -2, -2, -3000, -2000],
+                    [10, -2, 5, -1, -1, 5, -2, 10],
+                    [5, -2, -1, -1, -1, -1, -2, 5],
+                    [5, -2, -1, -1, -1, -1, -2, 5],
+                    [10, -2, 5, -1, -1, 5, -2, 10],
+                    [-2000, -3000, -2, -2, -2, -2, -3000, -2000],
+                    [10000, -2000, 10, 5, 5, 10, -2000, 10000]]
+        
         score = 0
         for row in range(self.n):
             for col in range(self.n):
@@ -206,7 +237,101 @@ class ComputeOthello:
 
         return score
 
-    def undo_move(self, move):
+    def evaluate_board_midgame(self):
+        weights = [[300, -80,  20,   20,   20,  20, -80, 300],
+                   [-80, -80,  -5,   -5,   -5,  -5, -80, -80],
+                   [20,  -5,    5,    5,    5,   5,  -5,  20],
+                   [20,  -5,    5,    5,    5,   5,  -5,  20],
+                   [20,  -5,    5,    5,    5,   5,  -5,  20],
+                   [20,  -5,    5,    5,    5,   5,  -5,  20],
+                   [-80, -80,  -5,   -5,   -5,  -5, -80, -80],
+                   [300, -80,  20,   20,   20,  20, -80, 300]]
+        weights =[  [9000, -3000, 10, 5, 5, 10, -3300, 9000],
+                    [-3000, -6000, -10, -10, -10, -10, -6000, -3000],
+                    [10, -10, -1, -1, -1, -1, -10, 10],
+                    [5, -10, -1, -1, -1, -1, -10, 5],
+                    [5, -10, -1, -1, -1, -1, -10, 5],
+                    [10, -10, -1, -1, -1, -1, -10, 10],
+                    [-3000, -6000, -10, -10, -10, -10, -6000, -3000],
+                    [9000, -3000, 10, 5, 5, 10, -3000, 9000]]
+        
+        #check conner if got change near conner score + 1000
+        if self.board[0][0] == self.current_player + 1:
+            weights[0][1] = 1000
+            weights[1][0] = 1000
+            weights[1][1] = 1000
+        if self.board[0][7] == self.current_player + 1:
+            weights[0][6] = 1000
+            weights[1][7] = 1000
+            weights[1][6] = 1000
+        if self.board[7][0] == self.current_player + 1:
+            weights[6][0] = 1000
+            weights[7][1] = 1000
+            weights[6][1] = 1000
+        if self.board[7][7] == self.current_player + 1:
+            weights[6][7] = 1000
+            weights[7][6] = 1000
+            weights[6][6] = 1000
+
+        #if all top row have only 1 opponent score + 1000 except conner
+        logic = 2
+        for i in range(1, 7):
+            if self.board[0][i] == self.opponent + 1:
+                logic -= 1
+        if logic == 0:
+            for i in range(1, 7):
+                weights[0][i] = 1000
+
+        logic = 2
+        for i in range(1, 7):
+            if self.board[i][0] == self.opponent + 1:
+                logic -= 1
+        if logic == 0:
+            for i in range(1, 7):
+                weights[i][0] = 1000
+
+        logic = 2
+        for i in range(1, 7):
+            if self.board[7][i] == self.opponent + 1:
+                logic -= 1
+        if logic == 0:
+            for i in range(1, 7):
+                weights[7][i] = 1000
+
+        logic = 2
+        for i in range(1, 7):
+            if self.board[i][7] == self.opponent + 1:
+                logic -= 1
+        if logic == 0:
+            for i in range(1, 7):
+                weights[i][7] = 1000
+
+
+
+
+
+        score = 0
+        for row in range(self.n):
+            for col in range(self.n):
+                if self.board[row][col] == self.current_player + 1:
+                    score += weights[row][col]
+                elif self.board[row][col] == self.opponent + 1:
+                    score -= weights[row][col]
+        return score
+    
+    def evaluate_board_endgame(self):
+        final_score = 0
+        for row in range(self.n):
+            for col in range(self.n):
+                if self.board[row][col] == self.current_player + 1:
+                    final_score += 3000
+                elif self.board[row][col] == self.opponent + 1:
+                    final_score -= 3000
+        return final_score
+
+
+    def undo_move(self):
+        move = self.move
         if self.is_valid_coord(move[0], move[1]) and self.board[move[0]][move[1]] == self.current_player + 1:
             self.board[move[0]][move[1]] = 0
             self.num_tiles[self.current_player] -= 1

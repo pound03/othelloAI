@@ -1,1 +1,2 @@
 
+    game.initialize_board()

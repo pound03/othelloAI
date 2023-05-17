@@ -120,6 +120,7 @@ class ComputeOthello:
 
         # Get the legal moves for the current player
         legal_moves = self.get_legal_moves()
+        
 
         # Set the initial best move and score
         best_move = None
